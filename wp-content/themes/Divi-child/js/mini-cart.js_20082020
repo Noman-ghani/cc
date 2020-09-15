@@ -1,0 +1,234 @@
+/*Set Quantity Start*/
+
+function getproductKey(){
+	var productKeys = [];
+	jQuery(".qtyval").each(function(){
+		var key = jQuery(this).attr("key");
+		productKeys.push(key);
+	})
+	return productKeys;
+}
+
+function getproductQty(){
+	var productQty = [];
+	
+	var fieldAdult = jQuery('input[name="numberOfAdults"]').val();
+		fieldAdult = parseInt(fieldAdult);
+		jQuery(".mini_cart_item .product-name").each(function(){
+			var TMP_surve_people = jQuery(this).data("surve_people");
+			var product_type = jQuery(this).data("product_type");
+			var catname = jQuery(this).parent().data("catname");
+			var productPrice = jQuery(this).parent().find(".menu-item-price .amount").text();
+			//The sum of those serve people putted in main course item
+			var totalsumServe = getServePeopleCount();
+			//Get highest price
+			var expensiveItem = getHighestPriceMainCourse();
+			console.log(expensiveItem);
+			if(product_type ==  "single"){
+				productQty.push(fieldAdult);
+
+			}
+			else if(catname == "main-course"){
+				var flagsumisless = false;
+				if(totalsumServe < fieldAdult){
+					flagsumisless = true;
+					if(expensiveItem == productPrice){
+						var TMP_i = 1;
+						while(totalsumServe < fieldAdult){
+							totalsumServe += TMP_surve_people;
+							TMP_i++;
+						}
+						console.log("Higest price product pushed in "+TMP_i);
+						productQty.push(TMP_i);
+					}
+					else{
+						productQty.push(1);
+					}
+				}
+				else if(totalsumServe == fieldAdult && flagsumisless == false){
+					productQty.push(1)
+				}
+
+			}
+			else{
+				if(catname != "main-course"){
+					var qty = jQuery(this).data("surve_people");
+					qty = fieldAdult / qty ;
+					qty = Math.ceil(qty);
+					productQty.push(qty);
+					console.log(qty);
+				}
+			}
+		});
+	return productQty;
+}
+function getServePeopleCount(){
+	var totalServePeople = [];
+	jQuery(".mini_cart_item .product-name").each(function(){
+		var surve_people = jQuery(this).data("surve_people");
+		totalServePeople.push(surve_people);
+	})
+	var sumServe = totalServePeople.reduce(function(a, b){
+		return a + b;
+		}, 0);
+	return sumServe;
+}
+
+function getHighestPriceMainCourse(){
+	var mainCoursePriceAll = [];
+	jQuery(".menu-item-price .amount").each(function(){
+		jQuery(this).children().remove();
+		var mainCourseprice = jQuery(this).text();
+		mainCoursePriceAll.push(mainCourseprice);
+	})
+	var max = mainCoursePriceAll.reduce(function(a, b) {
+		return Math.max(a, b);
+	});
+	
+	return max;
+}
+
+/*Set Quantity End*/
+
+( function ( $ ) {
+	"use strict";
+   // Define the PHP function to call from here
+	var data = {
+	  'action': 'mode_theme_update_mini_cart'
+	};
+	$(window).on('load',function(){
+		$('.cart-loader').addClass('active');
+		$.post(
+			woocommerce_params.ajax_url, // The AJAX URL
+			data, // Send our PHP function
+			function(response){
+				$('#sidebar .widget_shopping_cart_content').html(response); // Repopulate the specific element with the new content
+				$('.cart-loader').removeClass('active');
+			}
+		);
+	})
+	setTimeout(() => {
+		$('.cart-loader').removeClass('active');
+	}, 1000);
+   }( jQuery ) );
+
+
+jQuery(function($){
+	$(".menu-item-price .amount .woocommerce-Price-currencySymbol").remove(); 
+	
+	$("#numop").on("submit", function (e) {
+		e.preventDefault();
+    var fieldAdult = jQuery('input[name="numberOfAdults"]').val();
+		fieldAdult = parseInt(fieldAdult);
+		
+	var fieldChild = jQuery('input[name="numberOfchildren"]').val();
+		fieldChild = parseInt(fieldChild);
+		
+		$(".cart-loader").addClass("active");
+		
+		var tmp_keys = getproductKey();
+		var tmp_qtys = getproductQty();
+		console.log(tmp_qtys);
+       
+		var new_promise = new Promise((resolve, reject) =>{
+			$.ajax({
+				type: "POST",
+				url: action_file_url,
+				data: {pageajax:true,qty:tmp_qtys,key:tmp_keys,no_of_adults:fieldAdult,no_of_childs:fieldChild},
+				success: function(data)
+				{
+					$(".menu-estimate").html(data);
+					resolve(data)
+					$(".cart-loader").removeClass("active");
+					$(".checkout-btn").show();
+					
+					},
+				error: function(error) {
+					reject(error)
+				}
+			});
+		});
+  	});
+  
+	$(".remove-cart-menu").on("click", function () {
+		
+		var tmp_pdt_name = $(this).next(".product-name").text();
+		
+		var tmp_keys = $(this).data("menu_key");
+        var tmp_qtys = 0;
+        $(".cart-loader").addClass("active");
+        $(this).parent().remove();
+		var new_promise = new Promise((resolve, reject) =>{
+			$.ajax({
+				type: "POST",
+				url: action_file_url,
+				data: {pageajax:true,qty:tmp_qtys,key:tmp_keys},
+				success: function(data)
+				{
+					$('ul.cart_list').prepend('<li class="remove-item-notice">'+tmp_pdt_name+' has been removed from cart</li>');
+                    resolve(data);
+					$(".cart-loader").removeClass("active");
+					$(document.body).trigger('wc_fragment_refresh');
+				},
+				error: function(error) {
+					reject(error)
+				}
+			});
+		});
+	});
+	$(".remove-all-mini-cart").on("click", function () {
+		
+		var fieldAdult = jQuery('input[name="numberOfAdults"]').val();
+        fieldAdult = parseInt(fieldAdult);
+		$(".cart-loader").addClass("active");
+		
+		var tmp_keys = getproductKey();
+        var tmp_qtys = 0;
+        
+        
+        // console.log(a);
+		var new_promise = new Promise((resolve, reject) =>{
+			$.ajax({
+				type: "POST",
+				url: action_file_url,
+				data: {pageajax:true,qty:tmp_qtys,key:tmp_keys},
+				success: function(data)
+				{
+                    resolve(data);
+                    $(".rightcart .overflow-sec").children().remove();
+				},
+				error: function(error) {
+					reject(error)
+				}
+			});
+		});
+	});
+	$(document).on('click','.set-servers',function(){
+		var how_many_servers = $("#how_many_servers").val();
+		var servers_hours	 = $("#server_hours").val();
+		console.log(how_many_servers+ " /./ " +servers_hours );
+		if(how_many_servers == '' || servers_hours == ''){
+			$('.servers-error').remove();
+			$("#how_many_servers_field").before('<span class="error nop-errors servers-error">Both fields are required.</span>')
+		}else{
+			var new_promise = new Promise((resolve, reject) =>{
+				$.ajax({
+					type: "POST",
+					url: action_file_url,
+					data: {pageajax:true,how_many_servers: how_many_servers,servers_hours:servers_hours},
+					success: function(data)
+					{
+						$(".menu-estimate").html(data);
+						resolve(data)
+						$(".cart-loader").removeClass("active");
+					},
+					error: function(error) {
+						reject(error)
+					}
+				});
+			});
+		}
+
+	})
+	
+})

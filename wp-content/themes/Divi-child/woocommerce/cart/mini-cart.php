@@ -1,0 +1,176 @@
+<div class="productdiv rightcart">
+
+<div class="side-cart-head">
+				<h2>Your order</h2>
+				<p>Start adding your favourite dishes</p>
+			</div>
+	<div class="overflow-sec">
+							
+		<?php if ( ! WC()->cart->is_empty() ||  is_checkout_pay_page() || is_checkout()){?>
+
+				<div class="cart-loader active">
+					<img src="<?php echo get_stylesheet_directory_uri()?>/images/loader.gif" alt="loader">
+				</div>
+				<div class="remove-all">
+					<a href="javascript:;" class="remove-all-mini-cart">Clear All</a>
+				</div>
+				<ul class="woocommerce-mini-cart cart_list product_list_widget <?php echo esc_attr( $args['list_class'] ); ?>">
+					<?php
+						do_action( 'woocommerce_before_mini_cart_contents' );
+						foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
+							$_product     = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
+							$product_id   = apply_filters( 'woocommerce_cart_item_product_id', $cart_item['product_id'], $cart_item, $cart_item_key );
+							
+							if ( $_product && $_product->exists() && $cart_item['quantity'] > 0 && apply_filters( 'woocommerce_widget_cart_item_visible', true, $cart_item, $cart_item_key ) ) {
+								$product_name      = apply_filters( 'woocommerce_cart_item_name', $_product->get_name(), $cart_item, $cart_item_key );
+								$product_name      =  explode("–",$product_name);
+								$product_name      =  $product_name[0];
+								$thumbnail         = apply_filters( 'woocommerce_cart_item_thumbnail', $_product->get_image(), $cart_item, $cart_item_key );
+								$product_price     = apply_filters( 'woocommerce_cart_item_price', WC()->cart->get_product_price( $_product ), $cart_item, $cart_item_key );
+								$product_permalink = apply_filters( 'woocommerce_cart_item_permalink', $_product->is_visible() ? $_product->get_permalink( $cart_item ) : '', $cart_item, $cart_item_key );
+								$product_category = get_the_terms($cart_item['product_id'],'product_cat');
+								$main_course = ($_product->get_meta( '_main_course_check') == "main-course") ? $_product->get_meta( '_main_course_check') : "";
+								?>
+								<li id="<?php echo $cart_item_key; ?>" data-catName="<?php echo $main_course?>" key="<?php echo $cart_item_key; ?>" class="qtyval woocommerce-mini-cart-item <?php echo esc_attr( apply_filters( 'woocommerce_mini_cart_item_class', 'mini_cart_item', $cart_item, $cart_item_key ) ); ?>">
+									<span class="menu-item-price" hidden>
+									<?php echo $product_price?>
+									</span>
+									<a href="javascript:;" class="remove remove-cart-menu" data-menu_key="<?php echo $cart_item_key; ?>" >×</a>
+									
+										<h3 class="product-name"
+										<?php 
+										$menu_type = $_product->get_meta( 'menu_type') ? $_product->get_meta( 'menu_type') : 'Single';
+										$menu_quantity = ($_product->get_meta( '_wc_min_qty_product') > 0) ? $_product->get_meta( '_wc_min_qty_product') : 1;
+										?> 
+										data-product_type="<?php echo $menu_type ?>"
+										data-surve_people="<?php echo $menu_quantity ?>"
+										><?php echo $product_name; ?></h3>
+									
+									<?php echo wc_get_formatted_cart_item_data( $cart_item ); ?>
+									</li>
+									<?php
+								}
+							}
+							do_action( 'woocommerce_mini_cart_contents' );
+						?>
+				</ul>
+				<form id="numop" method="POST">
+					<?php
+					$num_of_Adult = WC()->session->get( 'no_of_adults', null );
+					$num_of_Adult = ($num_of_Adult != NULL) ? $num_of_Adult : 0;
+				
+					$no_of_Childs = WC()->session->get( 'no_of_childs', null );
+					$no_of_Childs = ($no_of_Childs != Null) ? $no_of_Childs : 0;
+					
+					$pizza_checked = WC()->session->get( 'pizza_checked',0);
+					$default_checked = '';
+					if($pizza_checked == 1){
+						$default_checked = 'checked';
+					}
+					
+					$minimum_adults = 0;
+					$minimum_childs = 0;
+					$child_data = get_option('children_data');
+					if($child_data != false){
+						$minimum_adults = $child_data['minimum_adults'];
+						$minimum_childs = $child_data['minimum_childs'];
+					}
+						?>
+
+						<div class="row">
+							<label class="noplabel">Total number of Adults
+							<span class="tagline">*Number of people is necessary to complete the order</span>
+							</label>
+							<input type="text" name="numberOfAdults" value="<?php echo $num_of_Adult?>" class="nopfield noAfield" onblur="this.value = minmax(this.value,<?php echo $minimum_adults?>, 10000000)">
+						</div>
+						<div class="row">
+							<label class="noplabel">Total number of Childrens
+							<span class="tagline">*Ages up to 3-8 years old</span>
+							</label>
+							<input type="text" name="numberOfchildren" value="<?php echo $no_of_Childs?>"class="nopfield noCfield" onblur="this.value = minmax(this.value,<?php echo $minimum_childs?>, 10000000)">
+						</div>
+						<div class="row pizza-check-row">
+							<input type="checkbox" class="deduct-pizza" <?php echo $default_checked ?> > Want Pizza price?
+						</div>
+							<input type="submit" name="nopsubmit" <?php echo $hidden?> class="nopsubmit" value="Estimate Now">
+				</form>
+				
+					<h2 class="total-price-title">Total Estimate Price</h2>
+				 
+				<p class="subtotal menu-estimate">
+					<strong><?php _e( '', 'woocommerce' ); ?></strong> 
+					
+					<?php
+					$catTotal = WC()->cart->get_cart_total();
+					echo $catTotal;?>
+				
+				</p>
+
+						<?php do_action( 'woocommerce_widget_shopping_cart_before_buttons' ); ?>
+					
+						<p class="woocommerce-mini-cart__buttons buttons checkout-btn">
+							<?php 
+							remove_action( 'woocommerce_widget_shopping_cart_buttons', 'woocommerce_widget_shopping_cart_button_view_cart', 10 );
+							do_action( 'woocommerce_widget_shopping_cart_buttons' ); ?>
+						</p>
+					
+						<?php do_action( 'woocommerce_widget_shopping_cart_after_buttons' ); ?>
+
+		<?php }?>
+	</div>
+		<a href="javascript:;" class="side-cart-toggle">
+			<i class="fa fa-shopping-cart"></i>
+			<?php
+			$items_count = sizeof( WC()->cart->get_cart() );
+			?>
+        	<p class="total item-count"> <?php echo $items_count; ?></p>
+		</a>
+</div>
+<script>
+	var action_file_url = '<?php echo get_stylesheet_directory_uri()?>/action.php';
+	var error_customer_email_url = '<?php echo get_stylesheet_directory_uri()?>/customer-email-url.php';
+</script>
+<script src="<?php echo get_stylesheet_directory_uri()?>/js/mini-cart.js"></script>
+<script>
+jQuery(function($){
+	$(document).on('click','.nopsubmit',function(){
+		if($(".noAfield").val() == 0){
+			if($(".nop-errors").length > 0){
+				$(".nop-errors").remove();
+			}
+			$(".noAfield").val(<?php echo $minimum_adults == '' ? 0 : $minimum_adults ?>);
+			$(".noAfield").after('<span class="error nop-errors">Required number of adults is <?php echo $minimum_adults?></span>')
+		}
+
+		// if($(".noCfield").val() == 0){
+		// 	if($(".nop-errors").length > 0){
+		// 		$(".nop-errors").remove();
+		// 	}
+		// 	$(".noCfield").val(<?php// echo $minimum_childs?>);
+		// 	// $(".noCfield").after('<span class="error nop-errors">Required number of childrens is <?php echo $minimum_childs?></span>')
+		// }
+	})
+	var noa = [];
+	var noc = [];
+	$('input[name="numberOfAdults"]').keyup(function(){
+		$(".nop-errors").remove();
+		 noa.push($(this).val());
+		 if(noa[noa.length - 1] < <?php echo $minimum_adults == '' ? 0 : $minimum_adults ?>){
+			$(this).after('<span class="error nop-errors">Required number of adults is <?php echo $minimum_adults?></span>')
+		}
+	});
+	// $('input[name="numberOfchildren"]').keyup(function(){
+	// 	$(".nop-errors").remove();
+	// 	 noc.push($(this).val());
+	// 	 if(noc[noc.length - 1] < <?php// echo $minimum_childs?>){
+	// 		$(this).after('<span class="error nop-errors">Required number of childrens is <?php// echo $minimum_childs?></span>')
+	// 	}
+	// });
+	// $(".checkout-btn > a").on("click",function(e){
+	// 	e.stopPropagation();
+	// 	var win=window.open(et_site_url+"/checkout", '_blank');
+	// 	win.focus();
+	//  });
+
+});
+</script>

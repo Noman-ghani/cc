@@ -1,0 +1,5 @@
+2020-09-04T10:15:39+00:00 CRITICAL Uncaught Error: Call to undefined method WC_Cart::get_price() in C:\xampp\htdocs\cc\wp-content\themes\Divi-child\action.php:48
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\cc\wp-content\themes\Divi-child\action.php on line 48
+
